@@ -272,7 +272,7 @@ height:50vh;
                 
                 
                     <div class="post-intro-read">
-                        <span>字数统计: <span class="post-count word-count">1.9k</span>阅读时长: <span class="post-count reading-time">6 min</span></span>
+                        <span>字数统计: <span class="post-count word-count">3.2k</span>阅读时长: <span class="post-count reading-time">11 min</span></span>
                     </div>
                 
                 <div class="post-intro-meta">
@@ -401,9 +401,8 @@ height:50vh;
         <div class="container container-unloaded">
             <main class="main post-page">
     <article class="article-entry">
-        <p>本文要讨论的系统中的Secret信息，可以理解为在系统运行所需的配置项中，例如数据库连接用户/密钥、对接API服务所需的appId/appSecret、基本的Basic Auth信息等类似的敏感信息。在第一篇中我们会针对系统中使用Secret信息遇到的一些问题入手，探索一些对应的解决方案</p>
-<a id="more"></a>
-<p>一般来说，我们可能会将这些信息明文或加密后固化在系统启动的配置文件中，又或者经由启动环境变量参数传入系统并覆盖到相应的配置项中。前者可能存在的问题可能会有：系统配置与环境的耦合严重，例如修改DB的认证信息后旧有的配置不再适用；安全性问题客观存在，即使是数据加密后存放在配置文件中，本质上也会在代码中暴露出来；固定化的配置方式，天然不支持动态口令的获取，我们只能通过一些定时任务来更新这些动态口令。后者的问题在于：虽然通过参数传入的方式可以减少一部分固化的配置代码，但是本质上这些配置代码只是转移到了系统启动的运维指令中，同时也会给运维行为增加了额外的负担；另外，动态的口令的问题依旧存在，仍然需要自行定时获取</p>
+        <p>本文要讨论的系统中的Secret信息，可以理解为在系统运行所需的配置项中，例如数据库连接用户/密钥、对接API服务所需的appId/appSecret、基本的Basic Auth信息等类似的敏感信息。在第一篇中将针对系统中使用Secret信息遇到的一些问题入手，探索一些对应的解决方案<br><a id="more"></a></p>
+<h3 id="Secret管理中心"><a href="#Secret管理中心" class="headerlink" title="Secret管理中心"></a>Secret管理中心</h3><p>一般来说，我们可能会将这些信息明文或加密后固化在系统启动的配置文件中，又或者经由启动环境变量参数传入系统并覆盖到相应的配置项中。前者可能存在的问题可能会有：系统配置与环境的耦合严重，例如修改DB的认证信息后旧有的配置不再适用；安全性问题客观存在，即使是数据加密后存放在配置文件中，本质上也会在代码中暴露出来；固化的配置方式，天然不支持动态口令的获取，我们只能通过一些定时任务来更新这些动态口令。后者的问题在于：虽然通过参数传入的方式可以减少一部分固化的配置代码，但是本质上这些配置代码只是转移到了系统启动的运维指令中，同时也会给运维行为增加了额外的负担；另外，动态的口令的问题依旧存在，仍然需要自行定时获取</p>
 <p>进一步思考，随着系统的增长，整个系统的体系中可能会存在不同技术选型的子系统，这些系统可能会分布在不同的节点上，更极端的情况下，这些节点不会是都存在在一个可信的、封闭的内部环境中。此时我们就很可能需要更高安全级的Secret信息获取的方式，同时需要对Secret信息获取的行为进行审计，甚至在这些信息变更的时候通知到子系统</p>
 <p>一种解决的思路是将这些分布在系统各处的零散Secret信息交由一个中心来进行统一管理，各个系统可以通过这个中心来获取自己所需的Secret信息。实现这个Secret信息管理中心可以按照保护等级大致分为三个等级:</p>
 <img src="https://cdn-images-1.medium.com/max/800/1*9AAsLm7ATw8Fl8aVbJQdYw.png" title="Refrence [1]">
@@ -411,7 +410,7 @@ height:50vh;
 <li>Limited Access<br>Secret信息被存放在一个限制访问的仓库/服务中，例如一个私有的git仓库</li>
 <li>Encrypted Secrets<br>Secret信息经过编码后，再存储到存储层</li>
 <li>Management<br>提供更高级别、更细粒度的控制的应用，提供诸如获取信息权限管控、审计日志 (audit log)等功能<ul>
-<li>ACL<br>   Access Control List 这里即获取权限控制</li>
+<li>ACL<br>   Access Control List 这里指获取权限控制</li>
 <li>TTL<br>   Time to Live 对某些Secret信息设定存活时间，实现动态口令/凭据</li>
 </ul>
 </li>
@@ -421,18 +420,34 @@ height:50vh;
 <p>在这种解决方案中，由于配置是在文件级别上进行操作，在运维人员提交配置的时候，可能会引起配置文件的冲突，那么就很可能需要运维人员多次进行冲突的修改；另外，对于客户端的应用也并不方便，需要我们在启动之前拉取代码并加以读取，进行更多的文件读操作，影响启动速度。同时对于客户端的权限有可能不够细致，不能直接做到对某个具体的客户端只授予某个文件或某个文件夹的权限 (当然使用hook机制可以实现这一功能)</p>
 <h4 id="Config-Management-Server"><a href="#Config-Management-Server" class="headerlink" title="Config Management Server"></a>Config Management Server</h4><p>我们也可以使用统一的配置中心服务来对Sercet信息进行集中管理，例如Spring Cloud Config。这样的情况下，配置中心会单独成为一个服务，暴露出相应的配置接口以供各个子系统调用。配置中心会使用自己的Backend来对数据进行存储，例如git、DB、consul… 在使用配置中心时，为了保证获取Sercet信息的安全性，需要我们对获取行为、数据存储添加一些保密措施，例如自行对数据进行加密操作，或者是简单集成一个可以提供这样的保护措施的组件来作为配置中心的存储后端</p>
 <h4 id="Hashicorp-Vault"><a href="#Hashicorp-Vault" class="headerlink" title="Hashicorp Vault"></a>Hashicorp Vault</h4><p>以下我们重点关注的是 Hashicorp Vault (后文简称为Vault) ，参考我们之前提到的实现Secret Management的三个阶段，Vault可以辅助我们快速构建第三级别的Mangement Server，它提供了完备且强大的功能来帮助我们完成这一目标</p>
-<p>如下图，简单来说Vault使用场景中会包含暴露接口的Vault Server服务中心、Secret信息的管理组件、身份验证服务、实际获取Secret信息的客户端</p>
-<img src="https://www.datocms-assets.com/2885/1539718548-howvaultworks3.svg" title="Reference [2]">
-<hr>
-<p><strong>我们可以利用Vault做什么</strong></p>
-<ul>
+<h5 id="Vault提供了什么"><a href="#Vault提供了什么" class="headerlink" title="Vault提供了什么"></a>Vault提供了什么</h5><ul>
 <li>Secure Secret Storage<br>Vault可以对key/value形式的Secret信息进行加密并存储，因而仅仅获取到原始的存储数据并不能获取到真正的信息。持久化的方式包括写到磁盘、Consul…</li>
 <li>Dynamic Secrets<br>Vault可以为某些系统生产动态口令，例如Database；在创建动态口令之后，Vault可以自动吊销那些过期的口令</li>
 <li>Data Encryption<br>Vault可以在不存储的情况下对数据进行加密/解密操作。在一些需要设计加密算法的场景时，可以使用这样的功能进行辅助操作</li>
 <li>Leasing and Renewal<br>Vault中所有的Secret信息都会与Vault订立一个”租约”，实质上是这些信息会有一定的有效期，当有效期截止的时候，Vault会自动吊销相应的信息。相应的，客户端需要通过Vault的内置刷新API来对想要的信息进行刷新操作</li>
 <li>Revocation<br>Vault不仅仅可以对单个的Secret信息进行吊销操作，还可以对Secret树进行吊销操作。例如吊销一个用户的所有相关信息</li>
 </ul>
-<p>对比前两种解决方案，Vault可以比git更方便地提供细粒度的权限管理与数据加密、获取方案；对比配置中心，Vault更专注于对Sercet信息的管理，对数据的存储和交换都进行保护，同时也暴露出rest接口以供调用；拥有更灵活的认证方式和审计记录机制</p>
+<h5 id="Vault可以做什么"><a href="#Vault可以做什么" class="headerlink" title="Vault可以做什么"></a>Vault可以做什么</h5><ul>
+<li>Secret Storage<br>Vault可以存储Secret信息，e.g., 敏感环境变量、API key、db credential。相较明文存储到文件、db、配置中心中，Vault对信息进行加密存储，且通过暴露API来获取数据，提供了更为安全的访问机制</li>
+<li>Dynamic Credential Generator<br>利用Vault的Dynamic Secret Engine，可以方便生成动态口令。同时借助Vault内部的过期、吊销机制和相应API，还可以做到对口令的生命周期的灵活管理</li>
+<li>Data Encryption<br>借助Vault的加密机制，可以在无需关注如何实现加密操作的情况下，将Vault作为一个加密/解密的工具</li>
+</ul>
+<p>如下图，在一个简单的Vault使用场景中，Client通过认证后得到token，并以此凭据来通过API获取存储在Vault中的Secret信息。Secret的加密、解密操作都会由Vault接管</p>
+<img src="https://www.datocms-assets.com/2885/1539718548-howvaultworks3.svg" title="Reference [2]">
+<h5 id="Vault是怎么做到的"><a href="#Vault是怎么做到的" class="headerlink" title="Vault是怎么做到的"></a>Vault是怎么做到的</h5><p>Vault将Secret Manager的挑战抽象为如何处置分散在各处的明文Secret信息、如何辨别并隔离获取信息的客户端，以及如何保证Vault保护自身的信息三大方面</p>
+<p>Vault将分散在各处的Secret信息经过加密以后存储起来，同时对信息获取的权限进行细粒度的控制并附加审计记录，将自身作为一个Secret Server Application，暴露API和提供Cli与客户端进行交互</p>
+<p>为了辨别究竟是哪个客户端来请求信息，Vault提供了动态的Secret。相较于长期有效的凭证，动态Secret可以视作是短时间有效的凭证 (short-lived ephemreal credentials)，由此可以用短时效的凭据来为每一个client分配唯一的凭据，并基于唯一的凭据，对不同的client的信息、权限等信息进行隔离</p>
+<p>为了保护应用自身的信息，一般来说会使用一个加密key来进行加密操作。但是对于简单使用key加密、解密数据的方案来说，需要保证所有的client和server都需要使用正确的方式来实现加密操作，一方面增加了实现复杂度，同时也增加了client端侵入负担</p>
+<p>因而，Vault将加密、解密作为一个服务提供出来供client端直接使用 (encrypt as a service)：Vault创建了一系列的内部命名key，并提供了加密/解密、注册、校验等API。内部的key management会管理这一系列的key，开发者不会真的看到这些内部的key。如此一来，开发者无需关心加密/解密的实现，同时也可以使用API来减轻对key声明周期管理的复杂度</p>
+<p>如下图，Vault的架构可以概括为三层：暴露给外部的HTTP/HTTPS API层、由Barrier包裹保护的核心层，以及最终持久化的存储端。其中，Barrier将保证只有经过加密后的数据才能被写入，只有经过校验和解密后的数据才能被输出</p>
+<img src="https://www.vaultproject.io/img/layers.png" title="Reference [2]">
+<p>Vault启动时会处于密封状态 (sealed)，执行任何操作前，Vault需要解封 (unseal)。启封操作是通过提供unseal keys实现的，当Vault init的时候，会产生一个encryption key来保护所有的数据，即加密/解密的key。这个key由master key来保护，默认地，Vault使用 <a href="https://en.wikipedia.org/wiki/Shamir's_Secret_Sharing/" target="_blank" rel="noopener">Shamir's secret sharing</a> 算法，将master key分为5个key，至少需要其中的任意3个key来重建master key</p>
+<img src="https://www.vaultproject.io/img/vault-shamir-secret-sharing.svg" title="Reference [2]">
+<p>当Vault解封以后，请求就可以经过API传入核心层。当client首次连接到Vault，需要进行身份认证。Vault提供了多种的认证方式，例如username/password、GitHub，以及application适用的public/private key和token认证方式。经过认证后，Vault会产生一个新的token作为访问令牌返回给client。随后client的就可以使用token作为凭据，发起请求。Vault通过识别token对应的client，得到其身份信息、对应的访问权限信息，并以此作为ACL的基础信息</p>
+<p>请求进入核心层后会被路由到对应的Secret Engine中，如果engine返回了一个secret，核心层会将其注册到过期管理组件中 (expiration manager) 并与一个lease ID进行关联。这个lease ID用于client端刷新、吊销secret的唯一ID</p>
+<p>同时，核心层还会将所有req和res的记录都传递给Audit Broker，并由其传递给配置的Audit Device中。另外，Vault也会针对一些失败场景，做先先写log后写入的事务操作 (write ahead logging)，同时配备相应的回滚管理，这一部分的实现也是对用户透明的</p>
+<p>最后，Vault的灵活的可插拔的组件设计，使得Vault在保证灵活性的同时，也为Vault的HA提供了基础。Vault的认证、Secret Engine，以及最终存储数据的Storage都可以灵活配置，来避免单点风险。同时由于Vault的master key的分享算法，可以使得系统中的不同节点仍然可以在保证安全的同时可以重建master key最终加密/解密数据</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本篇中简单的讨论了集中管理Secret信息的一些解决方案，并引出了Vault作为一种成熟快捷的解决方案。Vault可以在减少实现复杂度、减少对各个服务的侵入的同时，提供更为细粒度的权限控制、更加便利安全的加密/解密方法，以及相对更灵活的Secret生产机制 (k-v, Dynamic Secrets)，以及便利的监控审计功能</p>
 <h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><p>[1] <a href="https://medium.com/slalom-technology/secret-management-architectures-finding-the-balance-between-security-and-complexity-9e56f2078e54" target="_blank" rel="noopener">Secret Management Architectures: Finding the balance between security and complexity</a></p>
 <p>[2] <a href="https://www.hashicorp.com/products/vault/" target="_blank" rel="noopener">Hashicorp Vault</a></p>
 
@@ -443,7 +458,7 @@ height:50vh;
             <p>原文作者：<a href="https://zekelion.github.io">eriksen</a>
             </p><p>原文链接：<a href="https://zekelion.github.io/2019/01/13/使用Vault管理系统中的Secret信息/">https://zekelion.github.io/2019/01/13/使用Vault管理系统中的Secret信息/</a>
             </p><p>发表日期：<a href="https://zekelion.github.io/2019/01/13/使用Vault管理系统中的Secret信息/">January 13th 2019, 11:02:02 pm</a>
-            </p><p>更新日期：<a href="https://zekelion.github.io/2019/01/13/使用Vault管理系统中的Secret信息/">January 19th 2019, 9:43:50 pm</a>
+            </p><p>更新日期：<a href="https://zekelion.github.io/2019/01/13/使用Vault管理系统中的Secret信息/">February 9th 2019, 11:13:06 pm</a>
             </p><p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -568,7 +583,7 @@ top:50vh;
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#解决方案"><span class="toc-number">1.</span> <span class="toc-text">解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#git-repository"><span class="toc-number">1.1.</span> <span class="toc-text">git repository</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Config-Management-Server"><span class="toc-number">1.2.</span> <span class="toc-text">Config Management Server</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Hashicorp-Vault"><span class="toc-number">1.3.</span> <span class="toc-text">Hashicorp Vault</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Reference"><span class="toc-number">2.</span> <span class="toc-text">Reference</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Secret管理中心"><span class="toc-number">1.</span> <span class="toc-text">Secret管理中心</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#解决方案"><span class="toc-number">2.</span> <span class="toc-text">解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#git-repository"><span class="toc-number">2.1.</span> <span class="toc-text">git repository</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Config-Management-Server"><span class="toc-number">2.2.</span> <span class="toc-text">Config Management Server</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Hashicorp-Vault"><span class="toc-number">2.3.</span> <span class="toc-text">Hashicorp Vault</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Vault提供了什么"><span class="toc-number">2.3.1.</span> <span class="toc-text">Vault提供了什么</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Vault可以做什么"><span class="toc-number">2.3.2.</span> <span class="toc-text">Vault可以做什么</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Vault是怎么做到的"><span class="toc-number">2.3.3.</span> <span class="toc-text">Vault是怎么做到的</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#小结"><span class="toc-number">3.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Reference"><span class="toc-number">4.</span> <span class="toc-text">Reference</span></a></li></ol>
     </div>
     
     <div class="back-top iconfont-archer">&#xe639;</div>
