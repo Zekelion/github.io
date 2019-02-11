@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="eriksen">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="eriksen">
+    
+    <meta name="keywords" content="hexo,hexo-theme,hexo-blog">
+    
+    <meta name="description" content="">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>使用Vault管理系统中的Secret信息 (二) · Eriksen&#39;s Homepage</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/icon.jpg">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin="">
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin="">
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <!-- 谷歌统计  -->
+    
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/">Eriksen&#39;s Homepage</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">使用Vault管理系统中的Secret信息 (二)</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href="/">Eriksen's Homepage</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+
+height:50vh;
+">
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+            
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            使用Vault管理系统中的Secret信息 (二)
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class="post-intro-tags">
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="Infrastructure">Infrastructure</a>
+    
+</div>
+                
+                
+                    <div class="post-intro-read">
+                        <span>字数统计: <span class="post-count word-count">1.4k</span>阅读时长: <span class="post-count reading-time">7 min</span></span>
+                    </div>
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2019/02/10</span>
+                    
+                    <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                        <span class="iconfont-archer">&#xe602;</span>
+                        <span id="busuanzi_value_page_pv"></span>
+                    </span>
+                    
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>        
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <p>本文将搭建一个简单的Vault应用场景，其中Vault作为Secret Manager Server，并构建一个SpringBoot Server和一个Node Server作为client端，来从Vault获取相应的敏感配置信息<br><a id="more"></a></p>
+<p><img src="/2019/02/10/使用Vault管理系统中的Secret信息-1/arch.png" alt="Architecture"></p>
+<h2 id="Vault"><a href="#Vault" class="headerlink" title="Vault"></a>Vault</h2><h3 id="初始化Vault-Server"><a href="#初始化Vault-Server" class="headerlink" title="初始化Vault Server"></a>初始化Vault Server</h3><p>首先对Vault进行配置，这里为了便于本地实验，使用http作为Vault API接口协议；使用MySQL作为实际存储数据的Storage。配置文件<code>vault-config.hcl</code>如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">listener &quot;tcp&quot; &#123;</span><br><span class="line">  address = &quot;127.0.0.1:8200&quot;</span><br><span class="line">  tls_disable = 1</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">storage &quot;mysql&quot; &#123;</span><br><span class="line">  database = &quot;hello_vault&quot;</span><br><span class="line">  username = &quot;vaultUser&quot;</span><br><span class="line">  password = &quot;123456&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建对应的MySQL数据库与用户后，使用配置文件启动Vault Server</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vault server -config bin/config/vault-config.hcl</span><br></pre></td></tr></table></figure>
+<p>初始化Vault，由于本地配置Vault使用HTTP协议，需要先设置环境变量VAULT_ADDR。Vault初始化后会输出一些key，在进行解封、重启等操作时需要用到这些key作为操作凭据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">export VAULT_ADDR='http://127.0.0.1:8200' // export vault addr</span><br><span class="line"></span><br><span class="line">vault operator init // init vault</span><br><span class="line"></span><br><span class="line">// output</span><br><span class="line">Unseal Key 1: JLMr7wE+/C/mZb6rtMUVn7OKC5SBt1asZgedqJr5xwDj</span><br><span class="line">Unseal Key 2: kMgPPChUYh2XglK7tSEPvwmrR7pxZ6FH2VBCeLoW0d7Y</span><br><span class="line">Unseal Key 3: OI1ePMIEc2tiBC5O/bs4liQMpKAc4jlUI6nXth76cyBb</span><br><span class="line">Unseal Key 4: eymItnhLc7zUB3rmYE2x6Al+L8qUmqak6YCuaVYBCV+O</span><br><span class="line">Unseal Key 5: O+cO4kRbqYKPmIz2ThCmaGyyd00owHdIIL2J6G/lbWIk</span><br><span class="line"></span><br><span class="line">Initial Root Token: s.8eErick1q1cWa6ceGgnMUo4x</span><br><span class="line"></span><br><span class="line">Vault initialized with 5 key shares and a key threshold of 3. Please securely</span><br><span class="line">distribute the key shares printed above. When the Vault is re-sealed,</span><br><span class="line">restarted, or stopped, you must supply at least 3 of these keys to unseal it</span><br><span class="line">before it can start servicing requests.</span><br><span class="line"></span><br><span class="line">Vault does not store the generated master key. Without at least 3 key to</span><br><span class="line">reconstruct the master key, Vault will remain permanently sealed!</span><br><span class="line"></span><br><span class="line">It is possible to generate new unseal keys, provided you have a quorum of</span><br><span class="line">existing unseal keys shares. See "vault operator rekey" for more information.</span><br></pre></td></tr></table></figure>
+<p>Vault初始化以后会处于密封状态 (sealed)，此时Vault可以从MySQL中获取数据，但是由于核心中的Barrier的保护，需要确定如何对数据进行加密/解密操作。帮助Vault确定解密data的过程即解封 (unsealing)。解封需要使用之前初始化得到的unseal key，在输入key之后得到如下输出，输入三个key之后启封</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">vault operator unseal // unseal vault</span><br><span class="line"></span><br><span class="line">// output 1 key</span><br><span class="line">Key                Value</span><br><span class="line">---                -----</span><br><span class="line">Seal Type          shamir</span><br><span class="line">Initialized        true</span><br><span class="line">Sealed             true</span><br><span class="line">Total Shares       5</span><br><span class="line">Threshold          3</span><br><span class="line">Unseal Progress    1/3</span><br><span class="line">Unseal Nonce       1a600752-8cee-3b7b-f2be-5c212595842f</span><br><span class="line">Version            1.0.1</span><br><span class="line">HA Enabled         false</span><br><span class="line"></span><br><span class="line">// output 3 key</span><br><span class="line">Key             Value</span><br><span class="line">---             -----</span><br><span class="line">Seal Type       shamir</span><br><span class="line">Initialized     true</span><br><span class="line">Sealed          false</span><br><span class="line">Total Shares    5</span><br><span class="line">Threshold       3</span><br><span class="line">Version         1.0.1</span><br><span class="line">Cluster Name    vault-cluster-b517b8e0</span><br><span class="line">Cluster ID      00bb2172-4cc7-1aea-cdc0-73ac4121dc87</span><br><span class="line">HA Enabled      false</span><br></pre></td></tr></table></figure>
+<p>随后就可以使用初始化得到的root token来login验证。另外，在紧急情况下，root用户可以以单个用户的身份重新密封Vault: <code>vault operator seal</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">vault login s.8eErick1q1cWa6ceGgnMUo4x // login as root</span><br><span class="line"></span><br><span class="line">// output</span><br><span class="line">Success! You are now authenticated. The token information displayed below</span><br><span class="line">is already stored in the token helper. You do NOT need to run "vault login"</span><br><span class="line">again. Future Vault requests will automatically use this token.</span><br><span class="line"></span><br><span class="line">Key                  Value</span><br><span class="line">---                  -----</span><br><span class="line">token                s.8eErick1q1cWa6ceGgnMUo4x</span><br><span class="line">token_accessor       5WeupFwkpbbQaDY7SqxxFMZy</span><br><span class="line">token_duration       ∞</span><br><span class="line">token_renewable      false</span><br><span class="line">token_policies       ["root"]</span><br><span class="line">identity_policies    []</span><br><span class="line">policies             ["root"]</span><br></pre></td></tr></table></figure>
+<h3 id="写入数据"><a href="#写入数据" class="headerlink" title="写入数据"></a>写入数据</h3><p>使用KV Secret Engine，在<code>secret/hello</code>的路径下写入值为world的foo属性</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vault kv put secret/hello foo=world // set</span><br><span class="line"></span><br><span class="line">vault kv get secret/hello // get</span><br><span class="line"></span><br><span class="line">// output</span><br><span class="line">=== Data ===</span><br><span class="line">Key    Value</span><br><span class="line">---    -----</span><br><span class="line">foo    world</span><br></pre></td></tr></table></figure>
+<h3 id="分配Policy"><a href="#分配Policy" class="headerlink" title="分配Policy"></a>分配Policy</h3><p>Vault可以为特定path下的信息操作进行细粒度的控制。如下配置，将对之前写入的<code>secret/hello</code>级别下只赋予读操作权限，避免其他操作篡改</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"># Normal servers have version 1 of KV mounted by default, so will need these</span><br><span class="line"># paths:</span><br><span class="line">path &quot;secret/*&quot; &#123;</span><br><span class="line">  capabilities = [&quot;create&quot;]</span><br><span class="line">&#125;</span><br><span class="line">path &quot;secret/hello&quot; &#123;</span><br><span class="line">  capabilities = [&quot;read&quot;]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># Dev servers have version 2 of KV mounted by default, so will need these</span><br><span class="line"># paths:</span><br><span class="line">path &quot;secret/data/*&quot; &#123;</span><br><span class="line">  capabilities = [&quot;create&quot;]</span><br><span class="line">&#125;</span><br><span class="line">path &quot;secret/data/hello&quot; &#123;</span><br><span class="line">  capabilities = [&quot;read&quot;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>加载Policy策略到Vault中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">vault policy write my-policy bin/vault-policy.hcl // set policy to my-policy</span><br><span class="line"></span><br><span class="line">vault policy list // list</span><br><span class="line"></span><br><span class="line">vault policy read my-policy // read</span><br></pre></td></tr></table></figure>
+<p>这样，就可以针对这个Policy创建对应的token以供client端使用。当然，在实际使用中，Vault并不建议直接使用create指令创建token，而是通过Vault的认证方式，最终获取到client token来赋予client</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">vault token create -policy=my-policy // create client token</span><br><span class="line"></span><br><span class="line">// output</span><br><span class="line">Key                  Value</span><br><span class="line">---                  -----</span><br><span class="line">token                s.1HwugZfXikLsAN2uglYggTxl</span><br><span class="line">token_accessor       2xY6oC2ZI5HzqGYJBdV1UHbc</span><br><span class="line">token_duration       768h</span><br><span class="line">token_renewable      true</span><br><span class="line">token_policies       ["default" "my-policy"]</span><br><span class="line">identity_policies    []</span><br><span class="line">policies             ["default" "my-policy"]</span><br></pre></td></tr></table></figure>
+<h3 id="启用AppRole"><a href="#启用AppRole" class="headerlink" title="启用AppRole"></a>启用AppRole</h3><p>这里将使用AppRole的方式作为client向Vault发起认证的手段，AppRole可以结合Policy生成符合相应权限的client token</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vault auth enable approle // enable</span><br></pre></td></tr></table></figure>
+<p>创建my-role，设定secret_id和token的有效策略</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vault write auth/approle/role/my-role \</span><br><span class="line">    secret_id_ttl=10m \ // secret_id 有效期</span><br><span class="line">    token_num_uses=10 \</span><br><span class="line">    token_ttl=20m \ // token 有效期</span><br><span class="line">    token_max_ttl=30m \</span><br><span class="line">    secret_id_num_uses=40 \</span><br><span class="line">    policies=my-policy</span><br></pre></td></tr></table></figure>
+<p>获取相应的RoleID</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">vault read auth/approle/role/my-role/role-id</span><br><span class="line"></span><br><span class="line">// output</span><br><span class="line">Key        Value</span><br><span class="line">---        -----</span><br><span class="line">role_id    f39adbc5-3f9e-dfec-3e23-9562dced5c2f</span><br></pre></td></tr></table></figure>
+<p>生成一个新的SecretID</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vault write -f auth/approle/role/my-role/secret-id</span><br><span class="line"></span><br><span class="line">// output</span><br><span class="line">Key                   Value</span><br><span class="line">---                   -----</span><br><span class="line">secret_id             974fa891-16a8-a730-e7d0-cfd7ae547ed2</span><br><span class="line">secret_id_accessor    f19bb9a6-2094-19ca-0f80-27684e2e0288</span><br></pre></td></tr></table></figure>
+<p>随后就可以将获取到的RoleID和生成的SecretID下发给将要使用的client端使用。不同的client需要启动前可以由运维体系生成相应的secret，做到彼此隔离 (可以单独吊销某个client的secret)</p>
+<h2 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h2><h3 id="Node-js-Client"><a href="#Node-js-Client" class="headerlink" title="Node.js Client"></a>Node.js Client</h3><p>首先以一个Node Server作为client，在得到上述的认证条件后进行AppRole认证；经过Vault的login API，可以获取到新产生的client_token，作为之后请求的凭据。此处为了简便会将roleID和secretID写入到config中，实际使用时可以考虑作为环境变量动态传入</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VaultClient</span> </span>&#123;</span><br><span class="line">  <span class="keyword">constructor</span>() &#123;</span><br><span class="line">    <span class="keyword">this</span>.addr = <span class="string">''</span>;</span><br><span class="line">    <span class="keyword">this</span>.vault = <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">async</span> init() &#123;</span><br><span class="line">    <span class="keyword">let</span> self = <span class="keyword">this</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (!config.has(<span class="string">'vault.addr'</span>)) &#123; <span class="comment">// http://127.0.0.1:8200</span></span><br><span class="line">        <span class="keyword">throw</span> &#123;</span><br><span class="line">          errorCode: <span class="string">'E_VAULT_INIT_017'</span>,</span><br><span class="line">          reason: <span class="string">'missing config param'</span></span><br><span class="line">        &#125;;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      self.addr = config.get(<span class="string">'vault.addr'</span>);</span><br><span class="line">      <span class="keyword">let</span> clientToken = <span class="keyword">await</span> agent.post(self.addr + VAULT_LOGIN_ENDPOINT).send(&#123; <span class="comment">// url: http://127.0.0.1:8200/v1/auth/approle/login</span></span><br><span class="line">        role_id: config.get(<span class="string">'vault.roleID'</span>), <span class="comment">// f39adbc5-3f9e-dfec-3e23-9562dced5c2f</span></span><br><span class="line">        secret_id: config.get(<span class="string">'vault.secretID'</span>) <span class="comment">// 974fa891-16a8-a730-e7d0-cfd7ae547ed2</span></span><br><span class="line">      &#125;);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (!clientToken || !clientToken.body || !clientToken.body.auth || !clientToken.body.auth.client_token) &#123;</span><br><span class="line">        <span class="keyword">throw</span> &#123;</span><br><span class="line">          errorCode: <span class="string">'E_VAULT_INIT_047'</span>,</span><br><span class="line">          reason: <span class="string">'failed to login vault'</span></span><br><span class="line">        &#125;;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      clientToken = clientToken.body.auth.client_token;</span><br><span class="line">      <span class="built_in">console</span>.log(clientToken); <span class="comment">// e.g. s.2v3FIObPs5k0CWVvmUKPrChr</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (error) &#123;</span><br><span class="line">      <span class="built_in">console</span>.error(error);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之后就可以根据secret的path获取需要的信息了，这里简单起见使用了<code>node-vault</code>作为vault client</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VaultClient</span> </span>&#123;</span><br><span class="line">  <span class="keyword">constructor</span>() &#123;</span><br><span class="line">    <span class="keyword">this</span>.addr = <span class="string">''</span>;</span><br><span class="line">    <span class="keyword">this</span>.vault = <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">async</span> getFooAttr() &#123;</span><br><span class="line">    <span class="keyword">let</span> self = <span class="keyword">this</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (!self.vault) &#123;</span><br><span class="line">        <span class="keyword">return</span> config.get(<span class="string">'foo'</span>) || <span class="string">''</span>; <span class="comment">// default vaule: default</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">let</span> result = <span class="keyword">await</span> self.vault.read(HELLO_ATTR_PATH); <span class="comment">// secret/hello</span></span><br><span class="line">      <span class="keyword">return</span> (result.data &amp;&amp; result.data.foo) || config.get(<span class="string">'foo'</span>) || <span class="string">''</span>; <span class="comment">// e.g., hello</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (error) &#123;</span><br><span class="line">      <span class="built_in">console</span>.error(error);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">async</span> init() &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      ...</span><br><span class="line"></span><br><span class="line">      self.vault = Vault(&#123;</span><br><span class="line">        endpoint: self.addr,</span><br><span class="line">        token: clientToken <span class="comment">// 上文的clientToken</span></span><br><span class="line">      &#125;);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (error) &#123;</span><br><span class="line">      <span class="built_in">console</span>.error(error);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="https://zekelion.github.io">eriksen</a>
+            </p><p>原文链接：<a href="https://zekelion.github.io/2019/02/10/使用Vault管理系统中的Secret信息-1/">https://zekelion.github.io/2019/02/10/使用Vault管理系统中的Secret信息-1/</a>
+            </p><p>发表日期：<a href="https://zekelion.github.io/2019/02/10/使用Vault管理系统中的Secret信息-1/">February 10th 2019, 4:27:40 pm</a>
+            </p><p>更新日期：<a href="https://zekelion.github.io/2019/02/10/使用Vault管理系统中的Secret信息-1/">February 11th 2019, 12:10:13 pm</a>
+            </p><p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href="/2019/02/09/使用Vault管理系统中的Secret信息/" title="使用Vault管理系统中的Secret信息 (一)">
+                    <div class="prevTitle">使用Vault管理系统中的Secret信息 (一)</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    
+    <!-- partial('_partial/comment/changyan') -->
+    <!--PC版-->
+
+
+    
+    
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:eriksenHongbiao@icloud.com" class="iconfont-archer email" title="email"></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/Zekelion" class="iconfont-archer github" target="_blank" title="github"></a>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Vault"><span class="toc-number">1.</span> <span class="toc-text">Vault</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#初始化Vault-Server"><span class="toc-number">1.1.</span> <span class="toc-text">初始化Vault Server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#写入数据"><span class="toc-number">1.2.</span> <span class="toc-text">写入数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分配Policy"><span class="toc-number">1.3.</span> <span class="toc-text">分配Policy</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#启用AppRole"><span class="toc-number">1.4.</span> <span class="toc-text">启用AppRole</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Client"><span class="toc-number">2.</span> <span class="toc-text">Client</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Node-js-Client"><span class="toc-number">2.1.</span> <span class="toc-text">Node.js Client</span></a></li></ol></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 3
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/10</span><a class="archive-post-title" href="/2019/02/10/使用Vault管理系统中的Secret信息-1/">使用Vault管理系统中的Secret信息 (二)</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/09</span><a class="archive-post-title" href="/2019/02/09/使用Vault管理系统中的Secret信息/">使用Vault管理系统中的Secret信息 (一)</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/19</span><a class="archive-post-title" href="/2019/01/19/写一个自己的秒杀系统/">写一个自己的秒杀系统</a>
+        </li>
+    
+    </ul></div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="Infrastructure"><span class="iconfont-archer">&#xe606;</span>Infrastructure</span>
+    
+        <span class="sidebar-tag-name" data-tags="Design"><span class="iconfont-archer">&#xe606;</span>Design</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br>
+    1、请确保node版本大于6.2<br>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+        <span class="sidebar-category-name" data-categories="Backend"><span class="iconfont-archer">&#xe60a;</span>Backend</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "eriksen"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script>    
+     
+    </body>
+</html>
+
+
